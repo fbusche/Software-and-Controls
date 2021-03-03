@@ -1,0 +1,176 @@
+import tkinter
+import threading
+import os  # importing os library so as to communicate with the system
+import time  # importing time library to make Rpi wait because its too impatient
+from tkinter import *
+import logging
+from tkinter import messagebox
+from tkinter.scrolledtext import ScrolledText
+from ESC_Pi import ESC
+class hyperloop_control(Tk):
+
+    def __init__(self,master=None):
+        Tk.__init__(self,master)
+        self.title('control UI')
+        windowWidth = self.winfo_reqwidth()
+        windowHeight = self.winfo_reqheight()
+
+        # Gets both half the screen width/height and window width/height
+        positionRight = int(self.winfo_screenwidth() / 6 - windowWidth / 2)
+        positionDown = int(self.winfo_screenheight() / 6 - windowHeight / 2)
+
+        # Position the window
+        self.geometry("800x650+{}+{}".format(positionRight, positionDown))
+
+        #self.resizable(width=False, height=False)
+        self._init_window()
+
+    def _init_window(self):
+        container=Frame(self)
+        container.pack(side='top', fill='both',expand=True)
+        container.grid_rowconfigure(0,weight=1)
+        container.grid_columnconfigure(0,weight=1)
+        self._screens = {}
+        i=0
+        for scr in [_Run_widgets, _Imu_widgets]:
+            scr_name = scr.__name__
+            screen = scr(parent=container, controller=self)
+            screen.grid(row=i, column=0, sticky="nsew",padx=1,pady=1)
+            self._screens[scr_name] = screen
+            i+=1
+
+class _Run_widgets(Frame):
+    
+
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        self._controller = controller
+        self._buttons = {}
+        self._labels = {}
+        self.__init_screen()
+##      uncomment these lines to control pod
+        self.esc=ESC(pin=35)
+        
+
+    def __init_screen(self):
+        self._labels['track_length']=Label(self,bg='light grey',text="Total length")
+        self._labels['track_length'].grid(row=1,column=0,padx=1,pady=10,sticky="NSEW")
+
+        self.__create_title()
+        self.__create_buttons()
+
+    def __create_title(self):
+        self._labels['title'] = Label(self, text='HawkMobile 1.0', font=('Arial', 30))
+        self._labels['title'].grid(row=0, column=0,columnspan=3,sticky="nsew")
+
+    def __create_buttons(self):
+        #global start_img
+        #img = Image.open('pic/start.png')
+        #img = img.resize((100, 100), Image.ANTIALIAS)
+        #start_img = ImageTk.PhotoImage(img)
+
+        self._buttons['System_Check'] = Button(self,text='System Check') #,image=start_img 
+        self._buttons['System_Check'].bind('<Button-1>', self.__click_system_check_button)
+        self._buttons['System_Check'].grid(row=2, column=0,sticky="nsew")
+
+        self._buttons['start'] = Button(self,text='start') #,image=start_img 
+        self._buttons['start'].bind('<Button-1>', self.__click_start_button)
+        self._buttons['start'].grid(row=2, column=1,sticky="nsew")
+        self._buttons['start'].config(state=tkinter.DISABLED)
+        
+        self._buttons['stop'] = Button(self,text='stop') #,image=stop_img 
+        self._buttons['stop'].bind('<Button-1>', self.__click_stop_button)
+        self._buttons['stop'].grid(row=2, column=2, sticky="nsew")
+        self._buttons['stop'].config(state=tkinter.DISABLED)
+
+    def __click_system_check_button(self, e):
+        self.esc.calibrate()
+        self.esc.arm()
+        
+    def __click_start_button(self, e):
+        None
+
+    def __click_stop_button(self, e):
+        self.esc.halt()
+    
+class _Imu_widgets(Frame):
+
+    def __init__(self,parent,controller):
+        Frame.__init__(self, parent)
+        self._controller = controller
+        self._buttons = {}
+        self._labels = {}
+        self._message={}
+        self._canvas = {}
+        self.__init_screen()
+        self._pred_data_r = None
+        self.__show_result()
+
+    def __init_screen(self):
+        self._labels['Distance']=Label(self,bg='light grey',text="Distance")
+        self._labels['Distance'].grid(row=0,column=0,padx=5, pady=10,sticky="NSEW")
+        self._message['Distance'] = Message(self, bg='white',text="43")
+        self._message['Distance'].grid(row=0, column=1, padx=5, pady=10, sticky="NSEW")
+
+        self._labels['speed']=Label(self,bg='light grey',text="Speed")
+        self._labels['speed'].grid(row=1,column=0,padx=5,pady=10,sticky="NSEW")
+        self._message['speed'] = Message(self, bg='white',text="79")
+        self._message['speed'].grid(row=1, column=1, padx=5, pady=10, sticky="NSEW")
+
+        self._labels['acceleration']=Label(self, bg='light grey',text="Acceleration")
+        self._labels['acceleration'].grid(row=2,column=0,padx=5,pady=10,sticky="NSEW")
+        self._message['acceleration'] = Message(self, bg='white',text="143")
+        self._message['acceleration'].grid(row=2, column=1, padx=5, pady=10, sticky="NSEW")
+        
+    def __show_result(self):
+        None
+
+    def plot(self):
+        None
+        
+    def left_frame(self): 
+        self.left_frame = Frame(window, bg='light grey')
+        self.left_frame.grid(row=0, column=0, padx=10, pady=5)
+        self.tool_bar = Frame(self.left_frame, width=180, height=185)
+        self.tool_bar.grid(row=3, column=0, padx=5, pady=5)
+
+        self.B_calibrate = Button(self.left_frame, text="Calibrate", width=25, height=2, activeforeground='black',
+                                  activebackground='green'#,command=
+                                  )
+        self.B_calibrate.grid(row=1, column=0, padx=15, pady=15)
+        self.B_arm_control = Button(self.left_frame, text="run(arm_control)", width=25, height=2,
+                                    activeforeground='black', activebackground='green'#,command=lambda: threading.Thread(target=ButtonFunc.onRun, args=(2,)).start()
+                                    )
+        self.B_arm_control.grid(row=2, column=0, padx=15, pady=15)
+
+        self.B_right = Button(self.tool_bar, text=">", width=10, height=2, activeforeground='black',
+                              activebackground='green'#, command=ButtonFunc.onArrowRight
+                              )
+        self.B_right.grid(row=0, column=1, padx=5, pady=5)
+
+        self.B_left = Button(self.tool_bar, text="<", width=10, height=2, activeforeground='black',
+                             activebackground='green'#, command=ButtonFunc.onArrowLeft
+                             )
+        self.B_left.grid(row=0, column=0, padx=5, pady=5)
+        self.B_right_frequent = Button(self.tool_bar, text=">>>>", width=10, activeforeground='black',
+                                       activebackground='green'#, command=ButtonFunc.onAcceleration
+                                               )
+        self.B_right_frequent.grid(row=2, column=1, padx=5, pady=5)
+
+        self.B_left_frequent = Button(self.tool_bar, text="<<<<", width=10, activeforeground='black',
+                                      activebackground='green'#, command=ButtonFunc.onDeceleration
+                                      )
+        self.B_left_frequent.grid(row=2, column=0, padx=5, pady=5)
+
+        self.B_stop = Button(self.left_frame, text="Stop", width=25, height=2, activeforeground='black',
+                             activebackground='green' #,command=lambda: threading.Thread(target=ButtonFunc.onSpaceBar, args=(2,)).start()
+                             )
+        self.B_stop.grid(row=4, column=0, padx=15, pady=15)
+        #self.method=Label(window, bg='light grey',font=12,text="for calibration first Disconnect the battery and then press calibration\n for arming connect the batteries and then press arm_control\n Controls - \nleft (<) key to decrease speed & \nright (>) key to increase speed OR \n'd' or (<<<<) to decrease a lot of speed & \n'a' or (>>>>) to increase a lot of speed or \n'spacebar' to stop")
+        #self.method.grid(row=1,column=0,columnspan=2,padx=15,pady=15,sticky="NSEW")
+
+        
+if __name__ == '__main__':
+
+    window = hyperloop_control()
+    window.mainloop()    
