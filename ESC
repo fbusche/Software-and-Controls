@@ -1,0 +1,100 @@
+#!/usr/bin/python
+# Made by Utkarsh Gupta & Subramanya Prasad
+# This program will let you test your ESC and brushless motor.
+# Make sure your battery is not connected if you are going to calibrate it at first.
+
+import os  # importing os library so as to communicate with the system
+import time  # importing time library to make Rpi wait because its too impatient
+from tkinter import messagebox
+os.system ("sudo pigpiod") #Launching GPIO library
+time.sleep(1) # As i said it is too impatient and so if this delay is removed you will get an errorimport pigpio  # importing GPIO library
+import threading
+class ESC:
+    """
+    Turnigy Electonic Speed controller.
+    300 A
+    """
+    min_value = 700  # change this if your ESC's min value is different or leave it be
+
+    # Note that some batteries, 12 volt PSUs, etc. might only be capable of far less than this (e.g. 1350)
+    # However, the controllers range should still be set to max for finest full-scale resolution.
+    max_value = 2000  # change this if your ESC's max value is different or leave it be
+    def __init__(self, pin):
+##        self.conn = pigpio.pi()
+        self.pin = pin
+        self.min_value=700
+        self.max_value=2000
+    def pwm(self, width: int, snooze: int = 0) -> None:
+        """
+        Convenience wrapper around pigpio's set_servo_pulsewidth.
+        width: The servo pulsewidth in microseconds. 0 switches pulses off.
+        snooze: seconds before returning.
+        """
+        print("Setting pulse width to", width, "microseconds for", snooze, "seconds.")
+        self.conn.set_servo_pulsewidth(self.pin, width)
+        if snooze:
+            time.sleep(snooze)
+
+    def calibrate(self) -> None:  # This is the auto calibration procedure of a normal ESC
+        """
+        This trains the ESC on the full scale (max - min range) of the controller / pulse generator.
+        This only needs to be done when changing controllers, transmitters, etc. not upon every power-on.
+        NB: if already calibrated, full throttle will be applied (briefly)!  Disconnect propellers, etc.
+        
+        Disconnect the battery and press Enter
+        """
+        print("Calibrating...")
+        messagebox.showinfo('Disconnect the battery and press Enter')
+
+        self.pwm(width=self.max_value)
+        #input("Connect power and press Enter to calibrate...")
+        messagebox.showinfo('Connect power and press Enter to calibrate...')
+        self.pwm(width=self.max_value, snooze=2)   # Official docs: "about 2 seconds".
+        self.pwm(width=self.min_value, snooze=4)   # Time enough for the cell count, etc. beeps to play.
+        print("Finished calibration.")
+        
+        
+    def arm(self):  
+        """
+        Arms the ESC. This is the arming procedure of an ESC
+        Connect the battery and press Enter
+        Required upon every power cycle.
+        """
+
+        print("Arming...")
+        self.pwm(width=self.min_value, snooze=4)  # Time enough for the cell count, etc. beeps to play.
+        print("Armed...")
+    
+    def halt(self) -> None:
+        """
+        Switch of the GPIO, and un-arm the ESC.
+        Ensure this runs, even on unclean shutdown.
+        """
+        print("Slowing...")
+        self.pwm(width=self.min_value, snooze=1)   # This 1 sec seems to *hasten* shutdown.
+        print("Failsafe...")
+        self.pwm(0)
+        print("Disabling GPIO.")
+        self.conn.stop()
+        print("Halted.")
+
+    #         def test(self) -> None:
+    #     """
+    #     Test with a triangularish wave.
+    #     Useful for determining the max and min PWM values.
+    #     """
+    #     max_width = self.max_value - 1330  # microseconds
+    #     min_width = self.min_value + 80    # microseconds
+    #     step = 9  # microseconds
+    #     snooze = 0.3  # seconds
+    #     input("Press Enter to conduct run-up test...")
+    #     for i in range(1):
+    #         print("Increasing...")
+    #         for width in range(min_width, max_width, step):
+    #             self.pwm(width=width, snooze=snooze)
+    #     time.sleep(1)  # Duration test.  Seems to last almost 60s @ 1350.
+    #     print("Holding at max...")
+    #     snooze = 0.1
+    #     print("Decreasing...")
+    #     for width in range(max_width, min_width, -step):
+    #         self.pwm(width=width, snooze=snooze)
