@@ -6,7 +6,13 @@ from tkinter import *
 import logging
 from tkinter import messagebox
 from tkinter.scrolledtext import ScrolledText
-from ESC_Pi import ESC
+from ESC import ESC
+import multiprocessing
+import threading
+#from imu_record import VN100
+import serial 
+from datetime import datetime
+        
 class hyperloop_control(Tk):
 
     def __init__(self,master=None):
@@ -24,6 +30,7 @@ class hyperloop_control(Tk):
 
         #self.resizable(width=False, height=False)
         self._init_window()
+        
 
     def _init_window(self):
         container=Frame(self)
@@ -105,21 +112,53 @@ class _Imu_widgets(Frame):
         self.__init_screen()
         self._pred_data_r = None
         self.__show_result()
+        self.imudata()
+
+    def imudata(self):
+        ser = serial.Serial(
+            port='/dev/ttyUSB0',
+            baudrate=115200)
+        
+        if ser.isOpen():
+            print('Connected to VectorNav VN100')
+           
+        else:
+            print("not connected")
+        
+        try:
+            x=[]
+            line=ser.readline().decode().split(',')
+            t=datetime.now().strftime('%S.%f')
+            print('Connected to IMU')
+            x=[line[1],line[2],line[3]]
+            return x
+            
+        except:
+            pass
+            print('IMU aint working') 
+
 
     def __init_screen(self):
+        previous_time=30
+        y=0
+        current_time=datetime.now().strftime('%S.%f')
+        while(float(current_time)-previous_time>4):
+            y=self.imudata()
+        
         self._labels['Distance']=Label(self,bg='light grey',text="Distance")
         self._labels['Distance'].grid(row=0,column=0,padx=5, pady=10,sticky="NSEW")
-        self._message['Distance'] = Message(self, bg='white',text="43")
+        self._message['Distance'] = Message(self, bg='white',text=y[0])
         self._message['Distance'].grid(row=0, column=1, padx=5, pady=10, sticky="NSEW")
 
         self._labels['speed']=Label(self,bg='light grey',text="Speed")
         self._labels['speed'].grid(row=1,column=0,padx=5,pady=10,sticky="NSEW")
-        self._message['speed'] = Message(self, bg='white',text="79")
+        self._message['speed'] = Message(self, bg='white',text=y[1])
         self._message['speed'].grid(row=1, column=1, padx=5, pady=10, sticky="NSEW")
+
 
         self._labels['acceleration']=Label(self, bg='light grey',text="Acceleration")
         self._labels['acceleration'].grid(row=2,column=0,padx=5,pady=10,sticky="NSEW")
-        self._message['acceleration'] = Message(self, bg='white',text="143")
+        self._message['acceleration'] = Message(self, bg='white',text=y[2])
         self._message['acceleration'].grid(row=2, column=1, padx=5, pady=10, sticky="NSEW")
         
     def __show_result(self):
@@ -127,6 +166,11 @@ class _Imu_widgets(Frame):
 
     def plot(self):
         None
+        
+    def threadfunction(name):
+        time.sleep(2)
+        
+        
         
     def left_frame(self): 
         self.left_frame = Frame(window, bg='light grey')
@@ -173,4 +217,9 @@ class _Imu_widgets(Frame):
 if __name__ == '__main__':
 
     window = hyperloop_control()
-    window.mainloop()    
+    window.mainloop()
+    c=_Imu_widgets()
+    x=threading.Thread(target=imudata, args=(1,))
+    x.start()
+    
+    
