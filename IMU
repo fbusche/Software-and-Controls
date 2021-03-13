@@ -1,0 +1,105 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue JAN 31 2021
+@authors: Utkarsh Gupta & Subramanya Prasad
+"""
+#from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
+#import numpy as np
+
+
+from datetime import datetime
+import os,json
+import serial 
+import time
+# awshost ="a1xzn1z3u9o660-ats.iot.us-east-2.amazonaws.com"     # Endpoint
+# awsport = 8883          # Port no.   
+# clientId = "imu"  # Thing_Name
+# thingName ="imu"  # Thing_Name
+# caPath = "root-CA.crt" # Root_CA_Certificate_Name
+# certPath = "imu-certificate.pem.crt"# <Thing_Name>.cert.pem
+# keyPath = "imu-private.pem.key" 
+
+class VN100(object):
+    
+    def __init__(self,
+                 com_port='/dev/ttyUSB0',
+                 baudrate=115200,
+                 save_loc=None):
+        self.com_port=com_port
+        self.baudrate=baudrate
+        self.save_loc=save_loc
+        
+
+    
+    def open_imu(self):
+        # configure the serial connections (the parameters differs on the device you are connecting to)
+        
+        ser = serial.Serial(
+            port=self.com_port,
+            baudrate=self.baudrate)
+        
+        if ser.isOpen():
+            print('Connected to VectorNav VN100')
+            return ser
+        else:
+            print('IMU aint working')  
+        return ser
+
+
+
+    def read_all(self,ser):
+        line=ser.readline().decode().split(',')
+        #print(line)
+        # Wait for second change
+        try:
+            yaw = float(line[1])
+            pitch = float(line[2])
+            roll = float(line[3])
+            mag_x = float(line[4])
+            mag_y = float(line[5])
+            mag_z = float(line[6])
+            accel_x = float(line[7])
+            accel_y = float(line[8])
+            accel_z = float(line[9])
+            ang_x = float(line[10])
+            ang_y = float(line[11])
+            ang_z = float(line[12][:-5])
+            
+            message = {'time':time.strftime("%H,%M,%S"),'yaw' : yaw,'roll': roll,'pitch': pitch,'ang_x':ang_x,'ang_y':ang_y,'ang_z':ang_z,'x_accel' : accel_x,'y_accel' : accel_y,'z_accel' : accel_z}        
+            return message
+        except:
+            message = {'yaw' : 0,'roll': 0,'pitch': 0,'ang_x':0,'ang_y':0,'ang_z':0,'x_accel' :0,'y_accel' :0,'z_accel' : 0}        
+            #return 0
+
+    def record_imu(self):
+        try:
+            ser.open()
+            print('Connected to IMU')
+        except:
+            ser = self.open_imu()
+        date_str = datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S')
+        data = self.read_all(ser)
+        if data!=0:
+            return data    
+        
+if __name__ == '__main__':
+        # Init AWSIoTMQTTClient
+    # myMQTTClient=AWSIoTMQTTClient(clientId)
+    # myMQTTClient.configureEndpoint(awshost,awsport)
+    # myMQTTClient.configureCredentials(caPath,keyPath,certPath)
+    # # AWSIoTMQTTClient configuration
+    # myMQTTClient.configureOfflinePublishQueueing(-1) #Infinite offline publish Queueing
+    # myMQTTClient.configureDrainingFrequency(2) #Draining : 2hz
+    # myMQTTClient.configureConnectDisconnectTimeout(10) #10 sec
+    # myMQTTClient.configureMQTTOperationTimeout(5) #5 sec
+    # myMQTTClient.connect()    
+    vn100 = VN100(
+        save_loc='/home/pi/Desktop/AWS_push/logs/')
+    while True:
+        data = vn100.record_imu()
+        data=json.dumps(data)
+        print("Connecting...")
+
+        # myMQTTClient.publish("imu/data",data,0)
+
+
