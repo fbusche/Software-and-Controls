@@ -6,12 +6,16 @@ from tkinter import *
 import logging
 from tkinter import messagebox
 from tkinter.scrolledtext import ScrolledText
-from ESC import ESC
+from ESC_Pi import ESC
 import multiprocessing
 import threading
 #from imu_record import VN100
 import serial 
 from datetime import datetime
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+import csv
+import tkinter.ttk as ttk
         
 class hyperloop_control(Tk):
 
@@ -30,6 +34,7 @@ class hyperloop_control(Tk):
 
         #self.resizable(width=False, height=False)
         self._init_window()
+
         
 
     def _init_window(self):
@@ -39,7 +44,7 @@ class hyperloop_control(Tk):
         container.grid_columnconfigure(0,weight=1)
         self._screens = {}
         i=0
-        for scr in [_Run_widgets, _Imu_widgets]:
+        for scr in [_Run_widgets, _Imu_widgets, IMU_Graphs, IMU_Tables]:
             scr_name = scr.__name__
             screen = scr(parent=container, controller=self)
             screen.grid(row=i, column=0, sticky="nsew",padx=1,pady=1)
@@ -47,7 +52,6 @@ class hyperloop_control(Tk):
             i+=1
 
 class _Run_widgets(Frame):
-    
 
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
@@ -57,7 +61,6 @@ class _Run_widgets(Frame):
         self.__init_screen()
 ##      uncomment these lines to control pod
         self.esc=ESC(pin=35)
-        
 
     def __init_screen(self):
         self._labels['track_length']=Label(self,bg='light grey',text="Total length")
@@ -99,6 +102,9 @@ class _Run_widgets(Frame):
 
     def __click_stop_button(self, e):
         self.esc.halt()
+
+
+        
     
 class _Imu_widgets(Frame):
 
@@ -112,64 +118,66 @@ class _Imu_widgets(Frame):
         self.__init_screen()
         self._pred_data_r = None
         self.__show_result()
-        self.imudata()
+        #self.imudata()
+        
 
-    def imudata(self):
-        ser = serial.Serial(
-            port='/dev/ttyUSB0',
-            baudrate=115200)
+    #def imudata(self):
+        #commented out because not connected
+        #ser = serial.Serial(
+            #port='/dev/ttyUSB0',
+            #baudrate=115200)
         
-        if ser.isOpen():
-            print('Connected to VectorNav VN100')
+        #if ser.isOpen():
+        #    print('Connected to VectorNav VN100')
            
-        else:
-            print("not connected")
+        #else:
+        #    print("not connected")
         
-        try:
-            x=[]
-            line=ser.readline().decode().split(',')
-            t=datetime.now().strftime('%S.%f')
-            print('Connected to IMU')
-            x=[line[1],line[2],line[3]]
-            return x
+        #try:
+        #    x=[]
+        #    line=ser.readline().decode().split(',')
+        #    t=datetime.now().strftime('%S.%f')
+        #    print('Connected to IMU')
+        #    x=[line[1],line[2],line[3]]
+        #    return x
             
-        except:
-            pass
-            print('IMU aint working') 
+        #except:
+        #    pass
+        #    print('IMU aint working') 
 
 
     def __init_screen(self):
         previous_time=30
         y=0
         current_time=datetime.now().strftime('%S.%f')
-        while(float(current_time)-previous_time>4):
-            y=self.imudata()
+    #    while(float(current_time)-previous_time>4):
+    #        y=self.imudata()
         
         self._labels['Distance']=Label(self,bg='light grey',text="Distance")
         self._labels['Distance'].grid(row=0,column=0,padx=5, pady=10,sticky="NSEW")
-        self._message['Distance'] = Message(self, bg='white',text=y[0])
-        self._message['Distance'].grid(row=0, column=1, padx=5, pady=10, sticky="NSEW")
+        #self._message['Distance'] = Message(self, bg='white',text=y[0])
+        #self._message['Distance'].grid(row=0, column=1, padx=5, pady=10, sticky="NSEW")
 
         self._labels['speed']=Label(self,bg='light grey',text="Speed")
         self._labels['speed'].grid(row=1,column=0,padx=5,pady=10,sticky="NSEW")
-        self._message['speed'] = Message(self, bg='white',text=y[1])
-        self._message['speed'].grid(row=1, column=1, padx=5, pady=10, sticky="NSEW")
+        #self._message['speed'] = Message(self, bg='white',text=y[1])
+        #self._message['speed'].grid(row=1, column=1, padx=5, pady=10, sticky="NSEW")
 
 
         self._labels['acceleration']=Label(self, bg='light grey',text="Acceleration")
         self._labels['acceleration'].grid(row=2,column=0,padx=5,pady=10,sticky="NSEW")
-        self._message['acceleration'] = Message(self, bg='white',text=y[2])
-        self._message['acceleration'].grid(row=2, column=1, padx=5, pady=10, sticky="NSEW")
+        #self._message['acceleration'] = Message(self, bg='white',text=y[2])
+        #self._message['acceleration'].grid(row=2, column=1, padx=5, pady=10, sticky="NSEW")
         
     def __show_result(self):
         None
 
-    def plot(self):
-        None
-        
+    
+
+   
+
     def threadfunction(name):
         time.sleep(2)
-        
         
         
     def left_frame(self): 
@@ -213,13 +221,162 @@ class _Imu_widgets(Frame):
         #self.method=Label(window, bg='light grey',font=12,text="for calibration first Disconnect the battery and then press calibration\n for arming connect the batteries and then press arm_control\n Controls - \nleft (<) key to decrease speed & \nright (>) key to increase speed OR \n'd' or (<<<<) to decrease a lot of speed & \n'a' or (>>>>) to increase a lot of speed or \n'spacebar' to stop")
         #self.method.grid(row=1,column=0,columnspan=2,padx=15,pady=15,sticky="NSEW")
 
+class IMU_Graphs(Frame):
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        self._controller = controller
+        self._labels = {}
+        self.plot()
+
+
+    def plot(self):
+
+        fig = Figure(figsize = (5, 5),
+                                dpi = 75)
+
+        squaresList = [i**2 for i in range(101)]
+
+        plot1 = fig.add_subplot(111)
+
+        plot1.plot(squaresList)
+
+        canvas = FigureCanvasTkAgg(fig,
+                                   self)
+
+        canvas.draw()
+
+        canvas.get_tk_widget().pack(side=BOTTOM, anchor=SW, padx=5, pady=5)
+
+class IMU_Tables(Frame):
+
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        self._controller = controller
+        self.propulsionTable()
+        self.batteriesTable()
+        self.brakingTable()
+        self.__init_screen
+        
+
+    def __init_screen(self):
+
+        width = 500
+        height = 400
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width / 2) - (width / 2)
+        y = (screen_height / 2) - (height / 2)
+        self.geometry("%dx%d+%d+%d" % (width, height, x, y))
+        self.resizable(0, 0) 
+
+        
+
+    def propulsionTable(self):
+
+        TableMargin = Frame(self, width=500)
+        TableMargin.pack(side=TOP)
+
+        scrollbarx = Scrollbar(TableMargin, orient=HORIZONTAL)
+        scrollbary = Scrollbar(TableMargin, orient=VERTICAL)
+        tree = ttk.Treeview(TableMargin, columns=("Motor", "Motor Temp (Celsius)", "ESC", "ESC Temp (Celsius)"), 
+                            height=400, selectmode="extended", 
+                            yscrollcommand=scrollbary.set, 
+                            xscrollcommand=scrollbarx.set)
+        
+        scrollbary.config(command=tree.yview)
+        scrollbary.pack(side=RIGHT, fill=Y)
+        scrollbarx.config(command=tree.xview)
+        scrollbarx.pack(side=BOTTOM, fill=X)
+        tree.heading('Motor', text="Motor", anchor=W)
+        tree.heading('Motor Temp (Celsius)', text="Motor Temp (Celsius)", anchor=W)
+        tree.heading('ESC', text="ESC", anchor=W)
+        tree.heading('ESC Temp (Celsius)', text="ESC Temp (Celsius)", anchor=W)
+        tree.column('#0', stretch=NO, minwidth=0, width=0)
+        tree.column('#1', stretch=NO, minwidth=0, width=200)
+        tree.column('#2', stretch=NO, minwidth=0, width=200)
+        tree.column('#3', stretch=NO, minwidth=0, width=200)
+        tree.column('#4', stretch=NO, minwidth=0, width=200)
+        tree.pack()
+        
+        with open('.\propulsionTableTest.csv') as f:
+            reader = csv.DictReader(f, delimiter=',')
+            for row in reader:
+                motor_num = row['Motor']
+                motor_temp = row['Motor Temp (Celsius)']
+                esc_num = row['ESC']
+                esc_temp = row['ESC Temp (Celsius)']
+                tree.insert("", 0, values=(motor_num, motor_temp, esc_num, esc_temp))
+            
+
+    def batteriesTable(self):
+
+        TableMargin = Frame(self, width=500)
+        TableMargin.pack(side=TOP)
+
+        scrollbarx = Scrollbar(TableMargin, orient=HORIZONTAL)
+        scrollbary = Scrollbar(TableMargin, orient=VERTICAL)
+        tree = ttk.Treeview(TableMargin, columns=("Battery", "Voltage (v)", "Temp (Celsius)"), 
+                            height=400, selectmode="extended",
+                            yscrollcommand=scrollbary.set,
+                            xscrollcommand=scrollbarx.set)
+        
+        scrollbary.config(command=tree.yview)
+        scrollbary.pack(side=RIGHT, fill=Y)
+        scrollbarx.config(command=tree.xview)
+        scrollbarx.pack(side=BOTTOM, fill=X)
+        tree.heading('Battery', text="Battery", anchor=W)
+        tree.heading('Voltage (v)', text="Voltage (v)", anchor=W)
+        tree.heading('Temp (Celsius)', text="Temp (Celsius)", anchor=W)
+        tree.column('#0', stretch=NO, minwidth=0, width=0)
+        tree.column('#1', stretch=NO, minwidth=0, width=200)
+        tree.column('#2', stretch=NO, minwidth=0, width=200)
+        tree.column('#3', stretch=NO, minwidth=0, width=200)
+        tree.pack()
+        
+        with open('.\batteriesTableTest.csv') as f:
+            reader = csv.DictReader(f, delimiter=',')
+            for row in reader:
+                battery_num = row['Battery']
+                battery_voltage = row['Voltage (v)']
+                battery_temp = row['Temp (Celsius)']
+                tree.insert("", 0, values=(battery_num, battery_voltage, battery_temp))
+
+    def brakingTable(self):
+
+        TableMargin = Frame(self, width=500)
+        TableMargin.pack(side=TOP)
+
+        scrollbarx = Scrollbar(TableMargin, orient=HORIZONTAL)
+        scrollbary = Scrollbar(TableMargin, orient=VERTICAL)
+        tree = ttk.Treeview(TableMargin, columns=("Tank", "Pressure (PSi)"), 
+                            height=400, selectmode="extended", 
+                            yscrollcommand=scrollbary.set, 
+                            xscrollcommand=scrollbarx.set)
+        
+        scrollbary.config(command=tree.yview)
+        scrollbary.pack(side=RIGHT, fill=Y)
+        scrollbarx.config(command=tree.xview)
+        scrollbarx.pack(side=BOTTOM, fill=X)
+        tree.heading('Tank', text="Tank", anchor=W)
+        tree.heading('Pressure (PSi)', text="Pressure (PSi)", anchor=W)
+        tree.column('#0', stretch=NO, minwidth=0, width=0)
+        tree.column('#1', stretch=NO, minwidth=0, width=200)
+        tree.column('#2', stretch=NO, minwidth=0, width=200)
+        tree.pack()
+        
+        with open('.\brakingTableTest.csv') as f:
+            reader = csv.DictReader(f, delimiter=',')
+            for row in reader:
+                tank = row['Tank']
+                pressure = row['Pressure (PSi)']
+                tree.insert("", 0, values=(tank, pressure))
+            
+
         
 if __name__ == '__main__':
 
     window = hyperloop_control()
     window.mainloop()
-    c=_Imu_widgets()
-    x=threading.Thread(target=imudata, args=(1,))
-    x.start()
-    
-    
+    #c=_Imu_widgets()
+    #x=threading.Thread(target=imudata, args=(1,))
+    #x.start()
