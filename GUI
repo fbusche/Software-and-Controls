@@ -103,8 +103,30 @@ class _Run_widgets(Frame):
         self.esc.calibrate()
         self.esc.arm()
         
-    def __click_start_button(self, e):
-        None
+    #def __click_start_button(self, e):
+        #set variable
+    #    max_temp = 0
+    #    max_current = 0
+    #    track_length = 0
+        #calculated from IMU and are global variables
+    #    deceleration = 0
+    #    velocity = 0
+    #    position = 0
+        #calculated from these global variables
+    #    distanceRequiredToBreak = deceleration * velocity
+    #    distanceRemaining = track_length - position
+        
+    #    while True:
+    #        if distanceRemaining < distanceRequiredToBreak:
+    #            self.esc.halt()
+    #        else:
+    #            if temp > max_temp:
+    #                self.esc.halt()
+    #            for i in nanos:
+    #                if current > max_current:
+    #                    pwm -= 1
+    #                elif current < max_current:
+    #                    pwm += 1
 
     def __click_stop_button(self, e):
         self.esc.halt()
