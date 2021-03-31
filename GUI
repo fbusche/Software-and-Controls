@@ -98,6 +98,15 @@ class _Run_widgets(Frame):
         self._buttons['stop'].bind('<Button-1>', self.__click_stop_button)
         self._buttons['stop'].grid(row=2, column=2, sticky="nsew")
         self._buttons['stop'].config(state=tkinter.DISABLED)
+        
+    def deltaTime_Seconds():
+        end_time = datetime.now()
+        temp = str(end_time - start_time)
+        temp2 = temp.split(":")
+        seconds = (float(temp2[0]))*3600 + 
+                   (float(temp2[1]))*60 + 
+                   (float(temp2[2]))
+        print(seconds)
 
     def __click_system_check_button(self, e):
         self.esc.calibrate()
@@ -105,28 +114,62 @@ class _Run_widgets(Frame):
         
     #def __click_start_button(self, e):
         #set variable
+    #    start_time = datetime.now()
     #    max_temp = 0
-    #    max_current = 0
+    #    max_voltage = 0
     #    track_length = 0
+    #    time_elapsed = 0
+    #    setRate = 0
+    
+        #data from arduino (getting the current temp from temp sensor as a float) - just setting to zero for now tho
+    #    current_temp = 0
+    #    current_voltage = 0
+    
         #calculated from IMU and are global variables
     #    deceleration = 0
     #    velocity = 0
     #    position = 0
+    
         #calculated from these global variables
     #    distanceRequiredToBreak = deceleration * velocity
     #    distanceRemaining = track_length - position
+        #if track is 400 feet long, set track length to 350ft... also set as meters not feet
         
-    #    while True:
-    #        if distanceRemaining < distanceRequiredToBreak:
-    #            self.esc.halt()
-    #        else:
-    #            if temp > max_temp:
+    #list of all the pins
+    #    nano = {}
+    #    sensors = {}
+    
+    #while setRate < self.esc.MAX_VALUE:
+            
+            #start pod
+    #        self.esc.pwm(setRate)
+            #start clock
+    #        time_elapsed += self.deltaTime_Seconds()
+            
+            #pod only runs for 4 seconds max
+    #        if time_elapsed < 4:
+                #making sure we have enough space to break
+    #            if distanceRemaining =< distanceRequiredToBreak:
     #                self.esc.halt()
-    #            for i in nanos:
-    #                if current > max_current:
-    #                    pwm -= 1
-    #                elif current < max_current:
-    #                    pwm += 1
+    #            else:
+                    
+                    #loops through each nano (there's gonna be 3)
+                    #gonna run "analogRead()" which is part of what Talhah is doing to get data from Arduino
+    #                for i in nanos:
+    #                    for j in sensor:
+                            #checking that temperature isn't too high
+                            #also gonna get this from the arduino
+    #                        if current_temp > max_temp:
+    #                            self.esc.halt()
+                            #checks voltage of nano
+    #                        if current_voltage > max_voltage:
+    #                            setRate -= 1
+    #                        elif current_voltage < max_voltage:
+    #                            setRate += 1
+            #raise the rate (can't start at max because 0-max is too sudden all at once)
+    #        setRate += 10
+            
+    #    self.esc.halt()
 
     def __click_stop_button(self, e):
         self.esc.halt()
