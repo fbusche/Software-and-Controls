@@ -22,6 +22,7 @@ class HyperloopControlV0:
     startTime = datetime.now()
     maxTemperature = 0
     maxVoltage = 0
+    maxTime = 0
     trackLength = 0
     timeElapsed = 0
     setRate = 0
@@ -46,7 +47,7 @@ class HyperloopControlV0:
                     (float(temp2[2]))
         print(seconds)
 
-    # Run system check
+    # Run system check --> NOT AT ALL DONE
         # Set up (each step will have user input, start check, pause, stop check)
         # Odometry data
         # Temp
@@ -56,19 +57,20 @@ class HyperloopControlV0:
 
 
     # Failsafe Loop (post system check)
-        # Velocity
-        # Position
-        # Time
+        # Velocity - need
+        # Position - need
+        # Time - done
 
-    while setRate < self.esc.MAX_VALUE:
+    while timeElapsed < maxTime:
                 
-        #start pod
-        self.esc.pwm(setRate)
-        #start clock
-        timeElapsed += self.deltaTime_Seconds()
-                
-        #pod only runs for 4 seconds max
-        if timeElapsed < 4:
+        if setRate < self.esc.MAX_VALUE:
+
+            #start pod
+            self.esc.pwm(setRate)
+            #start clock
+            timeElapsed += self.deltaTime_Seconds()
+
+
             #making sure we have enough space to break
             if distanceRemaining =< distanceRequiredToBreak:
                 self.esc.halt()
@@ -89,5 +91,6 @@ class HyperloopControlV0:
                             setRate += 1
         #raise the rate (can't start at max because 0-max is too sudden all at once)
         setRate += 10
-                
+
+    #this halts the system by turning off the motors... but we need to add in a part that actually turns ON the brakes
     self.esc.halt()
