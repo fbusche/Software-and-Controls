@@ -2,25 +2,24 @@ import os
 import time
 from adafruit_servokit import Servokit
 
-kit = ServoKit(channels = 16)
-
 class ESC:
     MIN_VALUE = 0
     MAX_VALUE = 180
     def __init__(self):
+        self.kit = ServoKit(channels = 16)
         for i in range(8):
-            kit.servo[i].angle = MIN_VALUE
+            self.kit.servo[i].angle = MIN_VALUE
 
     def pwm(self, speed: int):
-        if(speed < MIN_VALUE):
+        if(speed <= MIN_VALUE):
             for i in range(8):
-                kit.servo[i].angle = MIN_VALUE
-        elif(speed > MAX_VALUE):
+                self.kit.servo[i].angle = MIN_VALUE
+        elif(speed >= MAX_VALUE):
             for i in range(8):
-                kit.servo[i].angle = MAX_VALUE
+                self.kit.servo[i].angle = MAX_VALUE
         else:
             for i in range(8):
-                kit.servo[i].angle = speed
+                self.kit.servo[i].angle = speed
 
     def calibrate(self):
         messagebox.showinfo('Disconnect the battery and press Enter')
