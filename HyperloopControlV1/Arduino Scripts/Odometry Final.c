@@ -42,6 +42,6 @@ void loop() {
     prev1 = cur1;
     prev2 = cur2; 
 
-    Serial.print("["+d1+", "+d2+", "+v1+", "+v2+"]");
+    Serial.print("["+(String)d1+", "+(String)d2+", "+(String)v1+", "+(String)v2+"]");
   }
 }
