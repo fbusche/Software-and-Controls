@@ -1,4 +1,3 @@
-//By Faith
 #include <Wire.h>
 
 #define address 0x04
@@ -14,9 +13,7 @@ int flag = 1;
 void setup() {
   Serial.begin(9600);
   Wire.begin(address);
-  Wire.onReceive(receiveEvent);
   Wire.onRequest(requestEvent);
-
 }
 
 void loop() {
@@ -26,44 +23,46 @@ void loop() {
   v4 = v4 + 0.001;
   v5 = v5 + 0.0001;
   data = "[" + String(v1) + "," + String(v2) + "," + String(v3) + "," + String(v4) + "," + String(v5) + "]"; //Grant did this
-  Serial.println(data);
+  //data = "[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]";
 }
 
-void receiveEvent(int byteCount) {
-  while (1 < Wire.available()) {
-    char c = Wire.read();
-    Serial.print(c);
+void requestEvent(){
+  int dataByteCount = data.length();
+  if(flag == 1){
+    Wire.write(dataByteCount);
+    Serial.println("-------------\nFlag: 1\nSize Sent: " + String(dataByteCount));
+    if(dataByteCount < 33){flag = 2;}
+    else{flag=3;}
   }
-  int x = Wire.read();
-  Serial.println(x);
-}
 
-void requestEvent() {
-  int Size = data.length();
-  if(flag == 1) {
-    Wire.write(Size);
-    Serial.println("Flag: 1");
-    Serial.println(Size);
-    flag = 2;
-  }
-  
-  if(flag == 2){
-    Serial.println("Flag: 2");
-    byte dataBytes[Size];
-    for(int i=0; i < data.length(); i++){
+  else if(flag == 2){
+    byte dataBytes[dataByteCount];
+    for(int i=0; i < dataByteCount; i++){
       dataBytes[i] = (byte)(data[i]);
     }
-    if(Size > 32){
-      Wire.write(dataBytes, 32);
-      byte dataBytes2[Size - 32];
-      for(int i=33; i < data.length(); i++){
-        dataBytes2[i] = dataBytes[i];
-      }
-      Wire.write(dataBytes2, (Size - 32));
-      flag = 1;
+    Wire.write(dataBytes, dataByteCount);
+    Serial.println("-------------\nFlag: 2");
+    flag = 1;
+  }
+
+  else if(flag == 3){
+    byte dataBytes[32];
+    for(int i=0; i < 32; i++){
+      dataBytes[i] = (byte)(data[i]);
     }
-    else {
-      flag = 1;
+    Wire.write(dataBytes, 32);
+    Serial.println("-------------\nFlag: 3");
+    flag = 4;
+  }
+
+  else if(flag == 4){
+    int Size = (dataByteCount - 32);
+    byte dataBytes[Size];
+    for(int i=0; i < Size; i++){
+      dataBytes[i] = (byte)(data[i+32]);
     }
+    Wire.write(dataBytes, Size);
+    Serial.println("-------------\nFlag: 4");
+    flag = 1;
   }
 }
