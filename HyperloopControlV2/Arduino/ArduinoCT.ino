@@ -33,6 +33,8 @@ float cout2;
 float cout3;
 String data = "";
 int flag = 1;
+float t1 = 0;
+float t2 = 0;
 void setup() {
     Serial.begin(9600);
 //    pinMode(A2, INPUT);
@@ -45,8 +47,8 @@ void setup() {
 }
 void loop() {
     sensors.requestTemperatures();
-    float t1 = sensors.getTempCByIndex(0);
-    float t2 = sensors.getTempCByIndex(1);
+    t1 = sensors.getTempCByIndex(0);
+    t2 = sensors.getTempCByIndex(1);
     for (int i = 0; i < 200; i++) {
         a0 = analogRead(A2);
         a1 = analogRead(A3);
@@ -82,18 +84,18 @@ void loop() {
     ave1=0;
     ave2=0;
     ave3=0;
-    Serial.println((String)t1 + "," + (String)t2 + "," + (String)cout0 + "," + (String)cout1 + "," + (String)cout2 + "," + (String)cout3);
+    //Serial.println((String)t1 + "," + (String)t2 + "," + (String)cout0 + "," + (String)cout1 + "," + (String)cout2 + "," + (String)cout3);
 
-    String string_t1 = String(t1,2);
-    String string_t2 = String(t2,2);
-    String string_cout0 = String(cout0,2);
-    String string_cout1 = String(cout1,2);
-    String string_cout2 = String(cout2,2);
-    String string_cout3 = String(cout3,2);
+    //String string_t1 = String(t1,2);
+    //String string_t2 = String(t2,2);
+    //String string_cout0 = String(cout0,2);
+    //String string_cout1 = String(cout1,2);
+    //String string_cout2 = String(cout2,2);
+    //String string_cout3 = String(cout3,2);
 
     
     
-    String data= "[" + string_t1 + "," + string_t2 + "," + string_cout0 + "," + string_cout1 + "," + string_cout2 + "," + string_cout3 + "]";
+    //String data= "[" + string_t1 + "," + string_t2 + "," + string_cout0 + "," + string_cout1 + "," + string_cout2 + "," + string_cout3 + "]";
     //FOR DEBUG
     //System.out.println(to_I2C);
 
@@ -101,6 +103,16 @@ void loop() {
 }
 
 void requestEvent() {
+  int t1_int = ((int)t1)+1;
+  int t2_int = ((int)t2)+1;
+  int cout0_int = ((int)cout0)+1;
+  int cout1_int = ((int)cout1) + 1;
+  int cout2_int = ((int)cout2)+1;
+  int cout3_int = ((int)cout3)+1;
+
+
+  data = (String)t1_int + "," + (String)t2_int + "," + (String)cout0_int + "," + (String)cout1_int + "," + (String)cout2_int + "," + (String)cout3_int;
+  
   int Size = data.length();
   if(flag == 1) {
     Wire.write(Size);
