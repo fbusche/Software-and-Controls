@@ -2,6 +2,7 @@
 
 #define hall_pin1    A0
 #define hall_pin2    A1
+#define address 4
 
 // make global variable for string, later when we add to it we wanna make a copy of the floats and then convert the copy to ints
 float diameter = 0.07; // meters
@@ -12,12 +13,14 @@ float v1,v2 = 0;
 unsigned long timer1prev,timer2prev = 0;
 bool prev1,prev2 = true;
 String floatToInt = '';
+int flag = 0;
 
 void setup() {
   Serial.begin(9600);
   pinMode(hall_pin1, INPUT);
   pinMode(hall_pin2, INPUT);
-  Wire.begin(6);
+  Wire.begin(address);
+  Wire.onReceive(receiveEvent);
   Wire.onRequest(requestEvent);
 }
 
@@ -52,9 +55,36 @@ void loop() {
   }
 }
 
+void receiveEvent(int howMany) {
+  while (1 < Wire.available()) {
+    char c = Wire.read();
+    Serial.print(c);
+  }
+  int x = Wire.read();
+  flag = x;
+  Serial.println("Flag Update To: " + (String)flag);
+  
+}
+
 void requestEvent()
 {
   String floatToInt = ((int)d1 + 1) + "," + ((int)d2 + 1) + "," + ((int)v1 + 1) + "," + ((int)v2 + 1);
   char[] c = [];
   Wire.write(floatToInt);
+  
+  int Size = floatToInt.length();
+  byte arrayByte[Size];
+  for(int i=0; i < Size; i++){
+    arrayByte[i] = byte(floatToInt[i]);
+  }
+  
+  if(flag == 1){
+    Wire.write(Size);
+  }
+  if(flag == 2){
+    Wire.write(arrayByte, Size);
+  }
+  
+  
+  
 }
