@@ -56,5 +56,5 @@ void requestEvent()
 {
   String floatToInt = ((int)d1 + 1) + "," + ((int)d2 + 1) + "," + ((int)v1 + 1) + "," + ((int)v2 + 1);
   char[] c = [];
-  Wire.write("string");
+  Wire.write(floatToInt);
 }
