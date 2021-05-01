@@ -12,7 +12,7 @@ float d1,d2 = 0;
 float v1,v2 = 0;
 unsigned long timer1prev,timer2prev = 0;
 bool prev1,prev2 = true;
-String floatToInt = '';
+String floatToInt = "";
 int flag = 0;
 
 void setup() {
