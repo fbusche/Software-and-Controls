@@ -12,9 +12,9 @@ from smbus2 import SMBus
 from tkinter import messagebox
 
 #GLOBAL VARIABLES
-arduino1ctData = [0.0,0.0,0.0,0.0,0.0,0.0]
-arduino2ctData = [0.0,0.0,0.0,0.0,0.0,0.0]
-arduino3odData = [0.0,0.0,0.0,0.0]
+arduino1ctData = [0,0,0,0,0,0]
+arduino2ctData = [0,0,0,0,0,0]
+arduino3odData = [0,0,0,0]
 arduino1ct_ADDRESS = 4
 arduino2ct_ADDRESS = 5
 arduino3ct_ADDRESS = 6
@@ -178,33 +178,27 @@ class HyperloopControlV2:
         print("POD ARMED")
 
 
-def requestFromArduino(address, byteCount): #Convert to float array, save to global variable
+def requestFromArduino(address):
     try:
-        string = ""
         with SMBus(1) as bus:
-            block = bus.read_i2c_block_data(address, 0, byteCount)
-        for i in range(len(block)):
-            string += (chr)(block[i])
+            block = bus.read_i2c_block_data(address, 1, 1)
+            Size = block[0]
+            block1 = bus.read_i2c_block_data(address, 2, Size)
+
+            String1 = ""
+            for i in range(len(block1)):
+                String1 += chr(block1[i])
+
+            StringValues = String1.split(",")
+            intArray = [0] * len(StringValues)
+            for i in range(len(StringValues)):
+                intArray[i] = int(StringValues[i])
+
+            return intArray
+
     except:
-        string = ""
-        with SMBus(1) as bus:
-            block = bus.read_i2c_block_data(address, 0, byteCount)
-        for i in range(len(block)):
-            string += (chr)(block[i])
-    
-    try:
-        command = "y="+string
-        exec(command)
-        return y
-    except:
-        string = ""
-        with SMBus(1) as bus:
-            block = bus.read_i2c_block_data(address, 0, byteCount)
-        for i in range(len(block)):
-            string += (chr)(block[i])
-        command = "y="+string
-        exec(command)
-        return y
+        print("Read Failed")
+        plswork(address)
 
 
 def mainRun():
