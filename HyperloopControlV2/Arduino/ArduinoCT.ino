@@ -3,6 +3,7 @@
 #include <DallasTemperature.h>
 #include <Wire.h>
 #define ONE_WIRE_BUS A0
+#define address 5
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 float r = 0.005; //wire dia in m
@@ -32,17 +33,18 @@ float cout1;
 float cout2;
 float cout3;
 String data = "";
-int flag = 1;
+int flag = 0;
 float t1 = 0;
 float t2 = 0;
 void setup() {
     Serial.begin(9600);
-//    pinMode(A2, INPUT);
-//    pinMode(A3, INPUT);
-//    pinMode(A6, INPUT);
-//    pinMode(A7, INPUT);
+    pinMode(A2, INPUT);
+    pinMode(A3, INPUT);
+    pinMode(A6, INPUT);
+    pinMode(A7, INPUT);
     int deviceCount = sensors.getDeviceCount();
-    Wire.begin(4);
+    Wire.begin(address);
+    Wire.onReceive(receiveEvent);
     Wire.onRequest(requestEvent);
 }
 void loop() {
@@ -84,52 +86,38 @@ void loop() {
     ave1=0;
     ave2=0;
     ave3=0;
-    //Serial.println((String)t1 + "," + (String)t2 + "," + (String)cout0 + "," + (String)cout1 + "," + (String)cout2 + "," + (String)cout3);
+}
 
-    //String string_t1 = String(t1,2);
-    //String string_t2 = String(t2,2);
-    //String string_cout0 = String(cout0,2);
-    //String string_cout1 = String(cout1,2);
-    //String string_cout2 = String(cout2,2);
-    //String string_cout3 = String(cout3,2);
-
-    
-    
-    //String data= "[" + string_t1 + "," + string_t2 + "," + string_cout0 + "," + string_cout1 + "," + string_cout2 + "," + string_cout3 + "]";
-    //FOR DEBUG
-    //System.out.println(to_I2C);
-
-
+void receiveEvent(int howMany) {
+  while (1 < Wire.available()) {
+    char c = Wire.read();
+    Serial.print(c);
+  }
+  int x = Wire.read();
+  flag = x;  
 }
 
 void requestEvent() {
-  int t1_int = ((int)t1)+1;
-  int t2_int = ((int)t2)+1;
-  int cout0_int = ((int)cout0)+1;
-  int cout1_int = ((int)cout1) + 1;
-  int cout2_int = ((int)cout2)+1;
-  int cout3_int = ((int)cout3)+1;
+  int t1_int = abs(((int)t1)+1);
+  int t2_int = abs(((int)t2)+1);
+  int cout0_int = abs(((int)cout0)+1);
+  int cout1_int = abs(((int)cout1)+1);
+  int cout2_int = abs(((int)cout2)+1);
+  int cout3_int = abs(((int)cout3)+1);
 
 
   data = (String)t1_int + "," + (String)t2_int + "," + (String)cout0_int + "," + (String)cout1_int + "," + (String)cout2_int + "," + (String)cout3_int;
   
   int Size = data.length();
-  if(flag == 1) {
-    Wire.write(Size);
-    Serial.println("Flag: 1");
-    Serial.println(Size);
-    flag = 2;
+  byte arrayByte[Size];
+  for(int i=0; i < Size; i++){
+    arrayByte[i] = byte(data[i]);
   }
-  
+
+  if(flag == 1){
+    Wire.write(Size);
+  }
   if(flag == 2){
-    Serial.println("Flag: 2");
-    byte dataBytes[Size];
-    for(int i=0; i < data.length(); i++){
-      dataBytes[i] = (byte)(data[i]);
-    }
-    Wire.beginTransmission(4);
-    Wire.write(dataBytes, Size);
-    Wire.endTransmission();
-    flag = 1;
+    Wire.write(arrayByte, Size);
   }
 }
