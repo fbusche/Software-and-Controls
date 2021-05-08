@@ -1,5 +1,12 @@
-from smbus2 import SMBus
+import keyboard
 from time import sleep
+from smbus2 import SMBus
+
+throttle = 0
+MIN = 0
+MAX = 180
+rate = 1
+time_delay = 0.005
 
 def plswork(address):
     try:
@@ -13,7 +20,6 @@ def plswork(address):
                 String1 += chr(block1[i])
             return String1
     except:
-        print("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
         plswork(address)
 
 def send(address, value):
@@ -24,17 +30,21 @@ def send(address, value):
         print("Send Failed, Resending")
         send(address, value)
 
-while(False):
-    print(plswork(4))
-    #sleep(0.01)
-
-while(False):
-    for i in range(180):
-        send(7, i)
-        sleep(0.01)
-
 while(True):
-    print(plswork(4))
-    for i in range(0, 180, 10):
-        send(7, i)
-        sleep(0.01)
+    if(keyboard.is_pressed("UP")):
+        if(throttle+rate <= MAX):
+            throttle+=rate
+        print(throttle)
+        sleep(time_delay)
+    if(keyboard.is_pressed("DOWN")):
+        if(throttle-rate >= MIN):
+            throttle-=rate
+        print(throttle)
+        sleep(time_delay)
+    if(keyboard.is_pressed("LEFT")):
+        throttle = MIN
+        print(throttle)
+    if(keyboard.is_pressed("RIGHT")):
+        throttle = MAX
+        print(throttle)
+    plswork(7, throttle)
